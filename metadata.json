@@ -1,0 +1,6 @@
+{
+  "name": "EcoPulse Digital",
+  "description": "Collectif de freelances experts No-Code et IA dédiés aux projets à impact environnemental et social.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

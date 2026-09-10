@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --color-offwhite: #F9FAFB;
+  --color-forest: #064E3B;
+  --color-electric: #2563EB;
+  --animate-marquee: marquee 40s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background-color: var(--color-offwhite);
+  color: var(--color-forest);
+  overflow-x: hidden;
+}
