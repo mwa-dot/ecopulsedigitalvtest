@@ -24,8 +24,8 @@ export default function ContactFooter() {
         <div className="mb-16 sm:mb-20">
           <ContactForm
             submitButtonText="Demander mon diagnostic offert"
-            successTitle="Test réussi : le formulaire fonctionne en démonstration."
-            successDescription="Toutes les validations ont été vérifiées avec succès."
+            successTitle="Demande envoyée avec succès !"
+            successDescription="Votre demande a bien été transmise. Nous vous recontacterons très rapidement pour convenir d’un créneau."
             resetButtonText="Envoyer une autre demande"
             idPrefix="footer-contact"
           />

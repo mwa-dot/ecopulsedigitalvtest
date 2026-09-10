@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
+import { AlertCircle } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export interface ContactFormData {
   name: string;
@@ -51,8 +53,8 @@ export default function ContactForm({
   subtitle,
   note,
   submitButtonText = "Demander mon diagnostic offert",
-  successTitle = "Test réussi : le formulaire fonctionne en démonstration.",
-  successDescription = "Toutes les validations ont été vérifiées avec succès.",
+  successTitle = "Demande envoyée avec succès !",
+  successDescription = "Merci ! Votre demande a bien été transmise. Nous reviendrons vers vous très prochainement.",
   resetButtonText = "Envoyer une autre demande",
   onSubmitSuccess,
   onReset,
@@ -67,7 +69,8 @@ export default function ContactForm({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const nameId = `${idPrefix}-name`;
   const emailId = `${idPrefix}-email`;
@@ -91,6 +94,11 @@ export default function ContactForm({
         return next;
       });
     }
+
+    if (status === 'error') {
+      setStatus('idle');
+      setErrorMessage(null);
+    }
   };
 
   const handleReset = () => {
@@ -100,12 +108,13 @@ export default function ContactForm({
     });
     setErrors({});
     setStatus('idle');
+    setErrorMessage(null);
     if (onReset) {
       onReset();
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const newErrors: Record<string, string> = {};
@@ -123,13 +132,46 @@ export default function ContactForm({
       return;
     }
 
+    if (!isSupabaseConfigured || !supabase) {
+      setStatus('error');
+      setErrorMessage(
+        "Configuration Supabase requise : veuillez renseigner les variables d'environnement VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY."
+      );
+      return;
+    }
+
     setStatus('loading');
-    setTimeout(() => {
+    setErrorMessage(null);
+
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .insert([
+          {
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            company: formData.organization.trim(),
+            message: formData.need.trim(),
+            source: 'landing-page'
+          }
+        ]);
+
+      if (error) {
+        throw error;
+      }
+
       setStatus('success');
       if (onSubmitSuccess) {
         onSubmitSuccess(formData);
       }
-    }, 1200);
+    } catch (err: unknown) {
+      console.error('Erreur insertion Supabase leads:', err);
+      setStatus('error');
+      const errDetail = err && typeof err === 'object' && 'message' in err
+        ? String((err as { message: unknown }).message)
+        : "Une erreur est survenue lors de l'envoi de votre demande. Veuillez réessayer.";
+      setErrorMessage(errDetail);
+    }
   };
 
   const containerClasses = variant === 'card'
@@ -175,6 +217,15 @@ export default function ContactForm({
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+          {errorMessage && (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs sm:text-sm flex items-start gap-3">
+              <AlertCircle size={18} className="flex-shrink-0 text-red-600 mt-0.5" />
+              <div className="flex-1 leading-relaxed">
+                {errorMessage}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label htmlFor={nameId} className="block text-xs sm:text-sm font-bold text-forest mb-2">
@@ -296,3 +347,4 @@ export default function ContactForm({
     </motion.div>
   );
 }
+
